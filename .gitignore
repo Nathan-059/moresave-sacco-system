@@ -1,0 +1,4 @@
+MoresaveSACCO/target/
+*.class
+*.jar
+!MoresaveSACCO/libs/*.jar
