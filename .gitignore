@@ -1,4 +1,15 @@
+# Compiled output
 MoresaveSACCO/target/
 *.class
-*.jar
-!MoresaveSACCO/libs/*.jar
+
+# Keep the MySQL connector jar
+!MoresaveSACCO/libs/
+
+# IDE files
+.idea/workspace.xml
+.idea/tasks.xml
+*.iml
+
+# OS
+.DS_Store
+Thumbs.db
