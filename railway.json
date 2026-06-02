@@ -1,4 +1,4 @@
-{
+﻿{
   "build": {
     "builder": "NIXPACKS",
     "buildCommand": "cd moresave-react/server && npm install"
