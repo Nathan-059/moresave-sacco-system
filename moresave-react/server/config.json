@@ -1,0 +1,20 @@
+{
+  "general": {
+    "currency": "UGX",
+    "timezone": "Africa/Kampala",
+    "dateFormat": "YYYY-MM-DD"
+  },
+  "security": {
+    "complexPasswords": true,
+    "sessionTimeout": 30,
+    "twoFactorAuth": false
+  },
+  "notifications": {
+    "emailOnRegistration": true,
+    "emailOnLoanApproval": true,
+    "smsOnDeposit": false
+  },
+  "support": {
+    "aiEnabled": true
+  }
+}

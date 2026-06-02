@@ -1,0 +1,80 @@
+:root {
+  --dark-brown: #4E3526;
+  --mid-brown: #6F4E37;
+  --soft-brown: #8B6B4A;
+  --warm-white: #FDFBF7;
+  --light-cream: #F6F1EA;
+  --accent-blue: #2980b9;
+  --accent-green: #27ae60;
+  --accent-orange: #e67e22;
+  --accent-red: #c0392b;
+  --text-dark: #2c3e50;
+  --text-light: #7f8c8d;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--light-cream);
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outfit', sans-serif;
+  color: var(--dark-brown);
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+}
+
+.btn {
+  padding: 10px 20px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.btn-primary {
+  background-color: var(--mid-brown);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--dark-brown);
+}
+
+.input-field {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.input-field:focus {
+  border-color: var(--mid-brown);
+  outline: none;
+}
