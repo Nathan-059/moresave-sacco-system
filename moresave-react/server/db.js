@@ -1,17 +1,25 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Aiven requires SSL in production; local dev does not
-const sslConfig = process.env.DB_SSL === 'true' ? {
-  ssl: { rejectUnauthorized: false }
-} : {};
+// Railway auto-injects MYSQL* variables when MySQL service is in the same project
+// Fall back to DB_* variables (manual / Aiven), then localhost for local dev
+const dbHost     = process.env.DB_HOST     || process.env.MYSQLHOST     || process.env.RAILWAY_TCP_PROXY_DOMAIN || 'localhost';
+const dbPort     = process.env.DB_PORT     || process.env.MYSQLPORT     || process.env.RAILWAY_TCP_PROXY_PORT   || '3306';
+const dbUser     = process.env.DB_USER     || process.env.MYSQLUSER     || 'root';
+const dbPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '';
+const dbName     = process.env.DB_NAME     || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'sacco';
+
+// Use SSL only when explicitly requested (Aiven) — not needed on Railway internal network
+const sslConfig = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
+
+console.log(`DB connecting to: ${dbHost}:${dbPort} / ${dbName} as ${dbUser}`);
 
 const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '3306'),
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'SACCO',
+  host:     dbHost,
+  port:     parseInt(dbPort),
+  user:     dbUser,
+  password: dbPassword,
+  database: dbName,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
