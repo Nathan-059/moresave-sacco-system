@@ -1,10 +1,14 @@
 {
   "name": "moresave-sacco-system",
   "version": "1.0.0",
-  "description": "Moresave SACCO Management System",
+  "description": "Moresave SACCO Management System - Backend API",
   "private": true,
   "engines": {
     "node": ">=18"
+  },
+  "scripts": {
+    "start": "cd moresave-react/server && node index.js",
+    "install-server": "cd moresave-react/server && npm install"
   },
   "dependencies": {
     "axios": "^1.16.1",
