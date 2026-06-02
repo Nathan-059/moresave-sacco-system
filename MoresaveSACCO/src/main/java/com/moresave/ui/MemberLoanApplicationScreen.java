@@ -100,10 +100,33 @@ public class MemberLoanApplicationScreen {
         purposeField.setPrefWidth(300);
         purposeField.setStyle("-fx-background-radius:5;");
 
-        // Interest info
+        // Interest info with explicit formula (concept paper: I = P*R*T)
         Label interestInfo = new Label("ℹ  Interest Rate: 2% per month (flat rate)");
         interestInfo.setTextFill(Color.web("#3498db"));
         interestInfo.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+
+        // Explicit formula display — concept paper requirement
+        Label formulaBox = new Label(
+            "📐 CALCULATION FORMULAS\n\n" +
+            "Interest:  I = P × R × T\n" +
+            "  P = Principal (loan amount)\n" +
+            "  R = 0.02 (2% per month)\n" +
+            "  T = Repayment period (months)\n\n" +
+            "Monthly Payment = (P + I) ÷ T\n\n" +
+            "Penalty (if overdue):\n" +
+            "  Penalty = Outstanding × 0.02 × Months Overdue"
+        );
+        formulaBox.setTextFill(Color.web("#2ecc71"));
+        formulaBox.setFont(Font.font("Arial", 11));
+        formulaBox.setWrapText(true);
+        formulaBox.setPadding(new Insets(10));
+        formulaBox.setStyle(
+            "-fx-background-color:#1a3a2a;" +
+            "-fx-background-radius:6;" +
+            "-fx-border-color:#27ae60;" +
+            "-fx-border-radius:6;" +
+            "-fx-border-width:1;"
+        );
 
         // Live preview
         Label previewLabel = new Label("Fill in amount and period above to see payment preview");
@@ -120,7 +143,8 @@ public class MemberLoanApplicationScreen {
         form.add(mkLabel("Repayment Period (months) *"), 0, 1); form.add(periodField, 1, 1);
         form.add(mkLabel("Purpose *"),              0, 2); form.add(purposeField, 1, 2);
         form.add(interestInfo,                      1, 3);
-        form.add(mkLabel("Payment Preview:"),       0, 4); form.add(previewLabel, 1, 4);
+        form.add(formulaBox,                        1, 4);
+        form.add(mkLabel("Payment Preview:"),       0, 5); form.add(previewLabel, 1, 5);
 
         // ── MESSAGE ───────────────────────────────────────────────────────
         Label messageLabel = new Label("");
@@ -231,13 +255,17 @@ public class MemberLoanApplicationScreen {
 
     private void updatePreview(TextField amountField, TextField periodField, Label previewLabel) {
         try {
-            double amount = Double.parseDouble(amountField.getText().trim());
-            int period    = Integer.parseInt(periodField.getText().trim());
-            double total   = amount + (amount * 0.02 * period);
-            double monthly = total / period;
+            double P = Double.parseDouble(amountField.getText().trim());
+            double R = 0.02;
+            int    T = Integer.parseInt(periodField.getText().trim());
+            double I = P * R * T;          // I = P × R × T
+            double total   = P + I;
+            double monthly = total / T;
             previewLabel.setText(String.format(
-                "Monthly Payment: UGX %,.0f   |   Total Payable: UGX %,.0f   |   Interest: UGX %,.0f",
-                monthly, total, total - amount
+                "I = %.0f × 0.02 × %d = UGX %,.0f\n" +
+                "Monthly Payment = (%.0f + %,.0f) ÷ %d = UGX %,.0f\n" +
+                "Total Payable = UGX %,.0f",
+                P, T, I, P, I, T, monthly, total
             ));
             previewLabel.setTextFill(Color.web("#2ecc71"));
         } catch (NumberFormatException e) {

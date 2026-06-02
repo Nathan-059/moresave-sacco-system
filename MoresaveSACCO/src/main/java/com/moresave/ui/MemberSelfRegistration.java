@@ -42,6 +42,22 @@ public class MemberSelfRegistration {
         subtitle.setFont(Font.font("Arial", 13));
         subtitle.setTextFill(Color.web(coffeeBrownSoft));
 
+        // Registration fee notice
+        Label feeNotice = new Label(
+            "ℹ Registration Fee: UGX 20,000 (paid at the SACCO office upon submission)"
+        );
+        feeNotice.setFont(Font.font("Arial", FontWeight.BOLD, 12));
+        feeNotice.setTextFill(Color.web("#e67e22"));
+        feeNotice.setWrapText(true);
+        feeNotice.setPadding(new Insets(8));
+        feeNotice.setStyle(
+            "-fx-background-color:#fef9f0;" +
+            "-fx-background-radius:5;" +
+            "-fx-border-color:#e67e22;" +
+            "-fx-border-radius:5;" +
+            "-fx-border-width:1;"
+        );
+
         TextField fullNameField = createField("Full Name", borderBrown);
         TextField phoneField = createField("Phone Number", borderBrown);
         TextField emailField = createField("Email (optional)", borderBrown);
@@ -229,7 +245,7 @@ public class MemberSelfRegistration {
         form.add(kinAddressField, 1, 12);
 
         VBox formCard = new VBox(15,
-                title, subtitle, form, messageLabel, registerBtn, backBtn
+                title, subtitle, feeNotice, form, messageLabel, registerBtn, backBtn
         );
         formCard.setAlignment(Pos.CENTER_LEFT);
         formCard.setPadding(new Insets(30));

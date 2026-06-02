@@ -97,17 +97,18 @@ public class LoanController {
             stmt.setString(11, "pending");
             stmt.executeUpdate();
 
-            // Send email notification to member
+            // Send SMS + Email notification to member
             try {
-                String emailSql =
-                    "SELECT m.email, m.full_name FROM members m WHERE m.member_number = ?";
-                PreparedStatement emailStmt = conn.prepareStatement(emailSql);
-                emailStmt.setString(1, memberNumber);
-                ResultSet emailRs = emailStmt.executeQuery();
-                if (emailRs.next()) {
-                    com.moresave.util.EmailService.sendLoanApplicationReceived(
-                        emailRs.getString("email"),
-                        emailRs.getString("full_name"),
+                String notifSql =
+                    "SELECT m.email, m.phone_number, m.full_name FROM members m WHERE m.member_number = ?";
+                PreparedStatement notifStmt = conn.prepareStatement(notifSql);
+                notifStmt.setString(1, memberNumber);
+                ResultSet notifRs = notifStmt.executeQuery();
+                if (notifRs.next()) {
+                    com.moresave.util.NotificationService.notifyLoanApplicationReceived(
+                        notifRs.getString("email"),
+                        notifRs.getString("phone_number"),
+                        notifRs.getString("full_name"),
                         loanNumber, loanAmount, repaymentPeriod, monthlyPayment
                     );
                 }
@@ -171,9 +172,10 @@ public class LoanController {
             disburseStmt.setString(1, loanNumber);
             disburseStmt.executeUpdate();
 
-            // Email notification
-            com.moresave.util.EmailService.sendLoanApproved(
-                memberEmail, memberName, loanNumber, loanAmount, monthlyPayment, maturityDate
+            // SMS + Email notification on approval
+            com.moresave.util.NotificationService.notifyLoanApproved(
+                memberEmail, getMemberPhone(conn, loanNumber),
+                memberName, loanNumber, loanAmount, monthlyPayment, maturityDate
             );
 
             return "✅ Loan approved and disbursed!\nRepayment schedule generated.";
@@ -416,8 +418,9 @@ public class LoanController {
             int rows = stmt.executeUpdate();
 
             if (rows > 0) {
-                com.moresave.util.EmailService.sendLoanRejected(
-                    memberEmail, memberName, loanNumber,
+                com.moresave.util.NotificationService.notifyLoanRejected(
+                    memberEmail, getMemberPhone(conn, loanNumber),
+                    memberName, loanNumber,
                     "Application did not meet approval criteria."
                 );
                 return "✅ Loan " + loanNumber + " has been rejected.";
@@ -511,13 +514,17 @@ public class LoanController {
                         conn.prepareStatement(closeLoan);
                 closeStmt.setInt(1, loanId);
                 closeStmt.executeUpdate();
-                return "✅ Payment recorded! " +
-                        "Loan fully repaid and closed.";
+
+                // Notify member
+                notifyRepayment(conn, loanNumber, amountPaid, 0);
+                return "✅ Payment recorded! Loan fully repaid and closed.";
             }
 
+            // Notify member of partial payment
+            notifyRepayment(conn, loanNumber, amountPaid, newOutstanding);
+
             return String.format(
-                    "✅ Payment of UGX %,.0f recorded!\n" +
-                            "Outstanding Balance: UGX %,.0f",
+                    "✅ Payment of UGX %,.0f recorded!\nOutstanding Balance: UGX %,.0f",
                     amountPaid, newOutstanding
             );
 
@@ -581,5 +588,42 @@ public class LoanController {
             System.out.println("Error: " + e.getMessage());
         }
         return -1;
+    }
+
+    private String getMemberPhone(Connection conn, String loanNumber) {
+        try {
+            PreparedStatement stmt = conn.prepareStatement(
+                "SELECT m.phone_number FROM members m " +
+                "JOIN loans l ON l.member_id = m.member_id " +
+                "WHERE l.loan_number = ?");
+            stmt.setString(1, loanNumber);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) return rs.getString("phone_number");
+        } catch (SQLException e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+        return "";
+    }
+
+    private void notifyRepayment(Connection conn, String loanNumber,
+            double amountPaid, double outstanding) {
+        try {
+            PreparedStatement stmt = conn.prepareStatement(
+                "SELECT m.email, m.phone_number, m.full_name FROM members m " +
+                "JOIN loans l ON l.member_id = m.member_id " +
+                "WHERE l.loan_number = ?");
+            stmt.setString(1, loanNumber);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                com.moresave.util.NotificationService.notifyRepaymentReceived(
+                    rs.getString("email"),
+                    rs.getString("phone_number"),
+                    rs.getString("full_name"),
+                    loanNumber, amountPaid, outstanding
+                );
+            }
+        } catch (Exception e) {
+            System.out.println("Notify repayment error: " + e.getMessage());
+        }
     }
 }

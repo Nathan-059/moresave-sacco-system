@@ -136,21 +136,11 @@ public class LoginApp extends Application {
             "-fx-background-radius:0 0 10 10;"
         );
 
-        // Info strip
-        Label infoStrip = new Label(
-            "Staff login: use your admin username  |  Members: use your Member Number (e.g. MRS0001)"
-        );
-        infoStrip.setFont(Font.font("Arial", 11));
-        infoStrip.setTextFill(Color.web(SOFT_BROWN));
-        infoStrip.setWrapText(true);
-        infoStrip.setPadding(new Insets(8, 32, 8, 32));
-        infoStrip.setStyle("-fx-background-color:" + LIGHT_CREAM + ";");
-
-        VBox root = new VBox(header, form, infoStrip);
+        VBox root = new VBox(header, form);
         root.setAlignment(Pos.TOP_CENTER);
         root.setStyle("-fx-background-color:" + WARM_WHITE + ";");
 
-        Scene scene = new Scene(root, 440, 520);
+        Scene scene = new Scene(root, 440, 480);
         stage.setTitle("Moresave SACCO - Login");
         stage.setScene(scene);
         stage.setResizable(false);
@@ -193,8 +183,13 @@ public class LoginApp extends Application {
             upd.setString(1, storedUsername);
             upd.executeUpdate();
 
-            if ("admin".equalsIgnoreCase(role) || "staff".equalsIgnoreCase(role)) {
-                // Run penalty engine on admin login
+            // Audit log
+            com.moresave.util.AuditService.logLogin(storedUsername);
+
+            if ("admin".equalsIgnoreCase(role) || "staff".equalsIgnoreCase(role)
+                || "manager".equalsIgnoreCase(role) || "loan_officer".equalsIgnoreCase(role)
+                || "cashier".equalsIgnoreCase(role)) {
+                // Run penalty engine on staff login
                 PenaltyEngine.runPenaltyCheck();
                 new AdminDashboard().show(stage);
                 return null;

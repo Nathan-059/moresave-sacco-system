@@ -77,7 +77,8 @@ public class AdminDashboard {
         String[][] menuItems = {
             {"📊 Dashboard"}, {"👥 Members"}, {"💰 Loans"},
             {"📝 Apply Loan"}, {"🏦 Savings"}, {"💵 Dividends"},
-            {"⚠️ Penalties"}, {"📋 Reports"}, {"🚪 Logout"}
+            {"⚠️ Penalties"}, {"📋 Reports"}, {"🔍 Audit Log"},
+            {"⚙ Settings"}, {"🚪 Logout"}
         };
         for (String[] item : menuItems) {
             boolean active = item[0].contains("Dashboard");
@@ -190,6 +191,8 @@ public class AdminDashboard {
         else if (item.contains("Dividends"))  new DividendScreen().show(stage);
         else if (item.contains("Penalties"))  new PenaltyScreen().show(stage);
         else if (item.contains("Reports"))    new ReportsScreen().show(stage);
+        else if (item.contains("Audit"))      new AuditLogScreen().show(stage);
+        else if (item.contains("Settings"))   new SettingsScreen().show(stage);
         else if (item.contains("Logout"))     new LoginApp().start(stage);
     }
 

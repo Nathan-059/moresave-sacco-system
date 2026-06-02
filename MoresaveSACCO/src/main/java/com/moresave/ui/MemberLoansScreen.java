@@ -102,17 +102,112 @@ public class MemberLoansScreen {
                 .addListener((obs, old, selected) -> {
                     if (selected != null) {
                         scheduleTable.setItems(
-                                controller
-                                        .getRepaymentSchedule(
-                                                selected[0]
-                                        )
+                                controller.getRepaymentSchedule(selected[0])
                         );
-                        selectInfo.setText(
-                                "Showing schedule for: " +
-                                        selected[0]
-                        );
+                        selectInfo.setText("Showing schedule for: " + selected[0]);
                     }
                 });
+
+        // ── MOBILE MONEY PAYMENT ──────────────────────────────────────────
+        Label payTitle = new Label("💳 Pay via Mobile Money");
+        payTitle.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+        payTitle.setTextFill(Color.web(coffeeBrownDark));
+
+        Label payInfo = new Label(
+            "Select a loan above, then click a button below to pay via your phone."
+        );
+        payInfo.setTextFill(Color.web(coffeeBrownSoft));
+        payInfo.setFont(Font.font("Arial", 12));
+
+        Button mtnBtn = new Button("📱 Pay via MTN Mobile Money");
+        mtnBtn.setPrefHeight(42); mtnBtn.setPrefWidth(240);
+        mtnBtn.setStyle("-fx-background-color:#FFCC00;-fx-text-fill:#333;-fx-font-weight:bold;" +
+                        "-fx-background-radius:6;-fx-cursor:hand;");
+
+        Button airtelBtn = new Button("📱 Pay via Airtel Money");
+        airtelBtn.setPrefHeight(42); airtelBtn.setPrefWidth(220);
+        airtelBtn.setStyle("-fx-background-color:#e74c3c;-fx-text-fill:white;-fx-font-weight:bold;" +
+                           "-fx-background-radius:6;-fx-cursor:hand;");
+
+        Label payMessage = new Label("");
+        payMessage.setFont(Font.font("Arial", 13));
+        payMessage.setWrapText(true);
+
+        // Get member phone for mobile money
+        String[] memberInfo = controller.getMemberByUsername(username);
+        String memberPhone = memberInfo != null ? memberInfo[4] : "";
+
+        mtnBtn.setOnAction(e -> {
+            String[] sel = loansTable.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                payMessage.setTextFill(Color.RED);
+                payMessage.setText("❌ Please select a loan first.");
+                return;
+            }
+            String loanNo = sel[0];
+            double outstanding = 0;
+            try { outstanding = Double.parseDouble(sel[3].replace(",", "")); } catch (Exception ignored) {}
+
+            if (!com.moresave.util.AppConfig.getBool("mobilemoney.enabled")) {
+                // Show manual instructions
+                payMessage.setTextFill(Color.web(coffeeBrownSoft));
+                payMessage.setText(com.moresave.util.MobileMoneyService
+                    .getManualPaymentInstructions(loanNo, outstanding));
+                return;
+            }
+
+            // Automatic USSD push — member gets prompt on phone
+            payMessage.setTextFill(Color.web(coffeeBrown));
+            payMessage.setText("⏳ Sending payment request to your phone " + memberPhone + "...");
+            double finalOutstanding = outstanding;
+            com.moresave.util.NotificationService.collectLoanRepayment(
+                memberPhone, memberInfo != null ? memberInfo[0] : "Member", loanNo, finalOutstanding
+            );
+            payMessage.setTextFill(Color.web("#27ae60"));
+            payMessage.setText(
+                "✅ Payment request sent to " + memberPhone + "!\n" +
+                "Check your phone — you will receive a prompt to enter your PIN.\n" +
+                "Amount: UGX " + String.format("%,.0f", finalOutstanding)
+            );
+        });
+
+        airtelBtn.setOnAction(e -> {
+            String[] sel = loansTable.getSelectionModel().getSelectedItem();
+            if (sel == null) {
+                payMessage.setTextFill(Color.RED);
+                payMessage.setText("❌ Please select a loan first.");
+                return;
+            }
+            String loanNo = sel[0];
+            double outstanding = 0;
+            try { outstanding = Double.parseDouble(sel[3].replace(",", "")); } catch (Exception ignored) {}
+
+            if (!com.moresave.util.AppConfig.getBool("mobilemoney.enabled")) {
+                payMessage.setTextFill(Color.web(coffeeBrownSoft));
+                payMessage.setText(com.moresave.util.MobileMoneyService
+                    .getManualPaymentInstructions(loanNo, outstanding));
+                return;
+            }
+
+            double finalOutstanding = outstanding;
+            com.moresave.util.NotificationService.collectLoanRepayment(
+                memberPhone, memberInfo != null ? memberInfo[0] : "Member", loanNo, finalOutstanding
+            );
+            payMessage.setTextFill(Color.web("#27ae60"));
+            payMessage.setText(
+                "✅ Payment request sent to " + memberPhone + "!\n" +
+                "Check your phone — you will receive a prompt to enter your PIN.\n" +
+                "Amount: UGX " + String.format("%,.0f", finalOutstanding)
+            );
+        });
+
+        HBox payBtnRow = new HBox(12, mtnBtn, airtelBtn);
+        payBtnRow.setAlignment(Pos.CENTER_LEFT);
+
+        VBox payBox = new VBox(10, payTitle, payInfo, payBtnRow, payMessage);
+        payBox.setPadding(new Insets(16));
+        payBox.setStyle("-fx-background-color:" + lightCream + ";-fx-background-radius:8;" +
+                        "-fx-border-color:" + borderBrown + ";-fx-border-radius:8;");
 
         Button backBtn = new Button(
                 "← Back to Dashboard"
@@ -132,7 +227,7 @@ public class MemberLoansScreen {
         VBox mainCard = new VBox(15,
                 title, loansTitle, loansTable,
                 scheduleTitle, selectInfo,
-                scheduleTable, backBtn
+                scheduleTable, payBox, backBtn
         );
         mainCard.setPadding(new Insets(30));
         mainCard.setStyle(

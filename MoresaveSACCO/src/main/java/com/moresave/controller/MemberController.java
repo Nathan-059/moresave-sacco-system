@@ -38,8 +38,9 @@ public class MemberController {
                     "INSERT INTO members " +
                             "(member_number, full_name, date_of_birth, " +
                             "gender, national_id, phone_number, email, " +
-                            "address, occupation, joining_date, membership_status) " +
-                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            "address, occupation, joining_date, membership_status, " +
+                            "registration_fee_paid) " +
+                            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
             int memberId;
             try (PreparedStatement memberStmt = conn.prepareStatement(memberSql, Statement.RETURN_GENERATED_KEYS)) {
@@ -54,6 +55,7 @@ public class MemberController {
                 memberStmt.setString(9, occupation);
                 memberStmt.setString(10, LocalDate.now().toString());
                 memberStmt.setString(11, "active");
+                memberStmt.setBoolean(12, true); // registration fee paid
                 memberStmt.executeUpdate();
 
                 try (ResultSet memberKeys = memberStmt.getGeneratedKeys()) {
@@ -104,9 +106,9 @@ public class MemberController {
 
             conn.commit();
 
-            // Send welcome email
-            com.moresave.util.EmailService.sendWelcome(
-                email.trim(), fullName, memberNumber, defaultPassword
+            // Send welcome SMS + Email
+            com.moresave.util.NotificationService.notifyWelcome(
+                email.trim(), phone.trim(), fullName, memberNumber, defaultPassword
             );
 
             return "✅ Member registered successfully! " +

@@ -1,0 +1,80 @@
+[
+  {
+    "memberNumber": "MRS1004",
+    "memberName": "TUMWINE JR",
+    "messages": [
+      {
+        "id": 1779109103918,
+        "sender": "member",
+        "text": "HELLO",
+        "timestamp": "2026-05-18T12:58:23.918Z",
+        "read": true
+      },
+      {
+        "id": 1779109103919,
+        "sender": "ai",
+        "text": "Hello! 👋 Welcome to Moresave SACCO Customer Support!\n\nI'm your virtual assistant. I'm here to help you with questions about:\n• 💰 Savings & Deposits\n• 🏦 Loans & Repayments\n• 📈 Dividends\n• 🔐 Account Access\n• 📞 Contact & Office Information\n\nPlease type your question and I'll do my best to help you right away!",
+        "timestamp": "2026-05-18T12:58:23.918Z",
+        "read": true
+      },
+      {
+        "id": 1779109124986,
+        "sender": "member",
+        "text": "I WANT TO Save",
+        "timestamp": "2026-05-18T12:58:44.986Z",
+        "read": true
+      },
+      {
+        "id": 1779109124988,
+        "sender": "ai",
+        "text": "Thank you for contacting Moresave SACCO Support! 🙏\n\nI've received your message and a staff member will review it and respond to you shortly during office hours (Mon–Fri, 8AM–5PM).\n\nFor urgent matters, please call us at **+256 700 000000**.\n\nIs there anything specific I can try to help you with right now?",
+        "timestamp": "2026-05-18T12:58:44.988Z",
+        "read": true
+      },
+      {
+        "id": 1779220520922,
+        "sender": "staff",
+        "staffName": "admin",
+        "text": "hello",
+        "timestamp": "2026-05-19T19:55:20.922Z",
+        "read": true
+      },
+      {
+        "id": 1779220533971,
+        "sender": "staff",
+        "staffName": "admin",
+        "text": "reply me",
+        "timestamp": "2026-05-19T19:55:33.971Z",
+        "read": true
+      },
+      {
+        "id": 1779221212365,
+        "sender": "staff",
+        "staffName": "admin",
+        "text": "Our staff will work on you soon",
+        "timestamp": "2026-05-19T20:06:52.365Z",
+        "read": true
+      }
+    ]
+  },
+  {
+    "memberNumber": "MRS0001",
+    "memberName": "Kyeyune Robert",
+    "messages": [
+      {
+        "id": 1780329455012,
+        "sender": "member",
+        "text": "HI",
+        "timestamp": "2026-06-01T15:57:35.012Z",
+        "read": true
+      },
+      {
+        "id": 1780329455014,
+        "sender": "ai",
+        "text": "Hello! 👋 Welcome to Moresave SACCO Customer Support!\n\nI'm your virtual assistant. I'm here to help you with questions about:\n• 💰 Savings & Deposits\n• 🏦 Loans & Repayments\n• 📈 Dividends\n• 🔐 Account Access\n• 📞 Contact & Office Information\n\nPlease type your question and I'll do my best to help you right away!",
+        "timestamp": "2026-06-01T15:57:35.014Z",
+        "read": true
+      }
+    ]
+  }
+]

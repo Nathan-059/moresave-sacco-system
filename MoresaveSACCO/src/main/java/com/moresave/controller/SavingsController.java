@@ -125,23 +125,46 @@ public class SavingsController {
             updateStmt.setInt(2, accountId);
             updateStmt.executeUpdate();
 
-            // Send deposit confirmation email
-            if ("deposit".equals(type)) {
+            // Record monthly savings snapshot for dividend calculation
+            // (INSERT OR UPDATE for current month)
+            String snapSql =
+                "INSERT INTO monthly_savings_snapshot " +
+                "(member_id, snap_year, snap_month, balance) " +
+                "SELECT m.member_id, YEAR(NOW()), MONTH(NOW()), ? " +
+                "FROM members m JOIN accounts a ON m.member_id = a.member_id " +
+                "WHERE a.account_id = ? " +
+                "ON DUPLICATE KEY UPDATE balance = ?";
+            PreparedStatement snapStmt = conn.prepareStatement(snapSql);
+            snapStmt.setDouble(1, newBalance);
+            snapStmt.setInt(2, accountId);
+            snapStmt.setDouble(3, newBalance);
+            snapStmt.executeUpdate();
+
+            // Send SMS + Email deposit/withdrawal confirmation
+            if ("deposit".equals(type) || "withdrawal".equals(type)) {
                 try {
-                    String emailSql =
-                        "SELECT m.email, m.full_name FROM members m " +
+                    String notifSql =
+                        "SELECT m.email, m.phone_number, m.full_name FROM members m " +
                         "JOIN accounts a ON m.member_id = a.member_id " +
                         "WHERE a.account_id = ?";
-                    PreparedStatement emailStmt = conn.prepareStatement(emailSql);
-                    emailStmt.setInt(1, accountId);
-                    ResultSet emailRs = emailStmt.executeQuery();
-                    if (emailRs.next()) {
-                        com.moresave.util.EmailService.sendDepositConfirmation(
-                            emailRs.getString("email"),
-                            emailRs.getString("full_name"),
-                            amount, newBalance,
-                            java.time.LocalDate.now().toString()
-                        );
+                    PreparedStatement notifStmt = conn.prepareStatement(notifSql);
+                    notifStmt.setInt(1, accountId);
+                    ResultSet notifRs = notifStmt.executeQuery();
+                    if (notifRs.next()) {
+                        String email = notifRs.getString("email");
+                        String phone = notifRs.getString("phone_number");
+                        String name  = notifRs.getString("full_name");
+                        if ("deposit".equals(type)) {
+                            com.moresave.util.NotificationService.notifyDeposit(
+                                email, phone, name, amount, newBalance,
+                                java.time.LocalDate.now().toString()
+                            );
+                        } else {
+                            com.moresave.util.NotificationService.notifyWithdrawal(
+                                email, phone, name, amount, newBalance,
+                                java.time.LocalDate.now().toString()
+                            );
+                        }
                     }
                 } catch (Exception ignored) {}
             }

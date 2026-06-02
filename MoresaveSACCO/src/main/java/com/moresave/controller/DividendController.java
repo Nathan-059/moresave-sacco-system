@@ -7,7 +7,8 @@ import java.sql.*;
 
 public class DividendController {
 
-    // Calculate dividends preview
+    // Calculate dividends preview using AVERAGE MONTHLY SAVINGS (concept paper requirement)
+    // Formula: Dividend = (Member Avg Monthly Savings / Total Avg Savings) × Total Profit
     public ObservableList<String[]>
     calculateDividends(
             String year,
@@ -20,20 +21,23 @@ public class DividendController {
             Connection conn =
                     DBConnection.getConnection();
 
-            // Get all members with savings
+            // Try to get average monthly savings from snapshots first
+            // Fall back to current balance if no snapshots exist
             String sql =
-                    "SELECT m.member_number, " +
-                            "m.full_name, " +
-                            "a.current_balance " +
-                            "FROM members m " +
-                            "JOIN accounts a " +
-                            "ON m.member_id = a.member_id " +
-                            "WHERE m.membership_status " +
-                            "= 'active' " +
-                            "ORDER BY m.member_number";
+                    "SELECT m.member_number, m.full_name, " +
+                    "COALESCE(" +
+                    "  (SELECT AVG(s.balance) FROM monthly_savings_snapshot s " +
+                    "   WHERE s.member_id = m.member_id AND s.snap_year = ?), " +
+                    "  a.current_balance" +
+                    ") AS avg_savings " +
+                    "FROM members m " +
+                    "JOIN accounts a ON m.member_id = a.member_id " +
+                    "WHERE m.membership_status = 'active' " +
+                    "ORDER BY m.member_number";
 
-            ResultSet rs = conn.prepareStatement(sql)
-                    .executeQuery();
+            PreparedStatement ps = conn.prepareStatement(sql);
+            ps.setString(1, year);
+            ResultSet rs = ps.executeQuery();
 
             // Calculate total savings
             double totalSavings = 0;
@@ -42,7 +46,7 @@ public class DividendController {
 
             while (rs.next()) {
                 double balance =
-                        rs.getDouble("current_balance");
+                        rs.getDouble("avg_savings");
                 totalSavings += balance;
                 members.add(new Object[]{
                         rs.getString("member_number"),

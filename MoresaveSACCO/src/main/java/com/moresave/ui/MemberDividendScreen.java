@@ -38,6 +38,29 @@ public class MemberDividendScreen {
         info.setWrapText(true);
         info.setMaxWidth(600);
 
+        // Explicit dividend formula — concept paper requirement
+        Label formulaLabel = new Label(
+            "📐 DIVIDEND CALCULATION FORMULA\n\n" +
+            "Your Share (%) = Your Avg Monthly Savings ÷ Total SACCO Savings × 100\n\n" +
+            "Your Dividend = Your Share (%) × Total Distributable Profit\n\n" +
+            "Example: If your avg savings = UGX 200,000\n" +
+            "  Total SACCO savings = UGX 155,000,000\n" +
+            "  Your share = 200,000 ÷ 155,000,000 × 100 = 0.129%\n" +
+            "  If profit = UGX 15,000,000 → Your dividend = UGX 19,355"
+        );
+        formulaLabel.setTextFill(Color.web("#2ecc71"));
+        formulaLabel.setFont(Font.font("Arial", 11));
+        formulaLabel.setWrapText(true);
+        formulaLabel.setMaxWidth(700);
+        formulaLabel.setPadding(new Insets(12));
+        formulaLabel.setStyle(
+            "-fx-background-color:#1a3a2a;" +
+            "-fx-background-radius:6;" +
+            "-fx-border-color:#27ae60;" +
+            "-fx-border-radius:6;" +
+            "-fx-border-width:1;"
+        );
+
         TableView<String[]> table =
                 new TableView<>();
         table.setPrefHeight(350);
@@ -73,7 +96,7 @@ public class MemberDividendScreen {
         });
 
         VBox mainCard = new VBox(15,
-                title, info, table, backBtn
+                title, info, formulaLabel, table, backBtn
         );
         mainCard.setPadding(new Insets(30));
         mainCard.setStyle(
