@@ -3,11 +3,7 @@
   "buildCommand": "cd moresave-react && npm install && npm run build",
   "outputDirectory": "moresave-react/dist",
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/index" },
+    { "source": "/api/(.*)", "destination": "https://moresave-sacco-system-production.up.railway.app/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
-  ],
-  "env": {
-    "NODE_ENV": "production",
-    "DB_SSL": "true"
-  }
+  ]
 }
