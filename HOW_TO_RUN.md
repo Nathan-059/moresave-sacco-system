@@ -1,3 +1,4 @@
+run now
 # Moresave SACCO - How to Run in IntelliJ IDEA
 
 ## Prerequisites

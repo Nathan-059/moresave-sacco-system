@@ -13,3 +13,16 @@ MoresaveSACCO/target/
 # OS
 .DS_Store
 Thumbs.db
+
+# Node
+node_modules/
+moresave-react/node_modules/
+moresave-react/server/node_modules/
+moresave-react/dist/
+
+# Environment secrets — never commit these
+moresave-react/server/.env
+.env
+
+# Uploaded files (too large for git)
+moresave-react/server/uploads/

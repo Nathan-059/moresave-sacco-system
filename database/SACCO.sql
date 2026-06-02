@@ -15,7 +15,7 @@ CREATE TABLE users (
     user_id        INT AUTO_INCREMENT PRIMARY KEY,
     username       VARCHAR(50)  NOT NULL UNIQUE,
     password_hash  VARCHAR(255) NOT NULL,
-    role           ENUM('admin','staff','member') NOT NULL DEFAULT 'member',
+    role           ENUM('admin','manager','loan_officer','cashier','member') NOT NULL DEFAULT 'member',
     is_active      BOOLEAN NOT NULL DEFAULT TRUE,
     created_at     DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     last_login     DATETIME NULL
@@ -34,6 +34,8 @@ CREATE TABLE members (
     occupation         VARCHAR(100) NULL,
     joining_date       DATE         NOT NULL,
     membership_status  ENUM('active','inactive','suspended') NOT NULL DEFAULT 'active',
+    registration_fee_paid BOOLEAN NOT NULL DEFAULT FALSE,
+    registration_fee_amount DECIMAL(10,2) NOT NULL DEFAULT 20000.00,
     user_id            INT NULL,
     CONSTRAINT fk_member_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
 );
@@ -136,7 +138,36 @@ CREATE TABLE collateral (
     CONSTRAINT fk_collateral_member FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE CASCADE
 );
 
-CREATE INDEX idx_members_number   ON members(member_number);
+-- Monthly savings snapshots for accurate dividend calculation
+CREATE TABLE monthly_savings_snapshot (
+    snapshot_id  INT AUTO_INCREMENT PRIMARY KEY,
+    member_id    INT           NOT NULL,
+    snap_year    INT           NOT NULL,
+    snap_month   INT           NOT NULL,
+    balance      DECIMAL(15,2) NOT NULL DEFAULT 0.00,
+    recorded_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_snap_member FOREIGN KEY (member_id) REFERENCES members(member_id) ON DELETE CASCADE,
+    CONSTRAINT uq_snap UNIQUE (member_id, snap_year, snap_month)
+);
+
+CREATE INDEX idx_snap_member ON monthly_savings_snapshot(member_id);
+CREATE INDEX idx_snap_year   ON monthly_savings_snapshot(snap_year, snap_month);
+
+CREATE TABLE audit_log (
+    log_id       INT AUTO_INCREMENT PRIMARY KEY,
+    user_id      INT          NULL,
+    username     VARCHAR(50)  NULL,
+    action       VARCHAR(100) NOT NULL,
+    table_name   VARCHAR(50)  NULL,
+    record_id    VARCHAR(50)  NULL,
+    description  VARCHAR(500) NULL,
+    ip_address   VARCHAR(45)  NULL,
+    logged_at    DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_log_user FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE SET NULL
+);
+
+CREATE INDEX idx_audit_user   ON audit_log(user_id);
+CREATE INDEX idx_audit_action ON audit_log(action);
 CREATE INDEX idx_members_national ON members(national_id);
 CREATE INDEX idx_accounts_member  ON accounts(member_id);
 CREATE INDEX idx_loans_member     ON loans(member_id);
@@ -151,6 +182,12 @@ CREATE INDEX idx_collateral_member  ON collateral(member_id);
 
 INSERT INTO users (username, password_hash, role, is_active, created_at)
 VALUES ('admin', 'admin123', 'admin', TRUE, '2024-01-01 08:00:00');
+
+-- Additional staff accounts
+INSERT INTO users (username, password_hash, role, is_active, created_at) VALUES
+('manager',      'manager123',      'manager',      TRUE, '2024-01-01 08:00:00'),
+('loan_officer', 'loanofficer123',  'loan_officer', TRUE, '2024-01-01 08:00:00'),
+('cashier',      'cashier123',      'cashier',      TRUE, '2024-01-01 08:00:00');
 
 -- ============================================================
 -- SEED MEMBERS (1,000)
@@ -249,10 +286,11 @@ BEGIN
         SET v_uid = LAST_INSERT_ID();
 
         INSERT INTO members (member_number, full_name, date_of_birth, gender, national_id,
-            phone_number, email, address, occupation, joining_date, membership_status, user_id)
+            phone_number, email, address, occupation, joining_date, membership_status,
+            registration_fee_paid, user_id)
         VALUES (v_mn, v_name, v_dob, v_gender, v_nin,
             v_phone, CONCAT(LOWER(REPLACE(v_name,' ','.')), i, '@gmail.com'),
-            v_addr, v_occ, v_join, 'active', v_uid);
+            v_addr, v_occ, v_join, 'active', TRUE, v_uid);
         SET v_mid = LAST_INSERT_ID();
 
         INSERT INTO accounts (account_number, member_id, account_type, opening_date, current_balance, status)
