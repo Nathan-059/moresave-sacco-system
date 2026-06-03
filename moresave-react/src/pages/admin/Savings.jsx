@@ -294,6 +294,7 @@ const Savings = () => {
                     <th style={{ padding: '12px 15px', color: 'var(--text-light)', textTransform: 'uppercase' }}>Amount</th>
                     <th style={{ padding: '12px 15px', color: 'var(--text-light)', textTransform: 'uppercase' }}>Payment Details</th>
                     <th style={{ padding: '12px 15px', color: 'var(--text-light)', textTransform: 'uppercase' }}>Reason</th>
+                    <th style={{ padding: '12px 15px', color: 'var(--text-light)', textTransform: 'uppercase' }}>Receipt</th>
                     <th style={{ padding: '12px 15px', color: 'var(--text-light)', textTransform: 'uppercase' }}>Requested At</th>
                     <th style={{ padding: '12px 15px', color: 'var(--text-light)', textTransform: 'uppercase', textAlign: 'center' }}>Actions</th>
                   </tr>
@@ -326,6 +327,11 @@ const Savings = () => {
                         )}
                       </td>
                       <td style={{ padding: '12px 15px', fontSize: '12px' }}>{req.description}</td>
+                      <td style={{ padding: '12px 15px' }}>
+                        {req.receipt_url
+                          ? <a href={req.receipt_url} target="_blank" rel="noreferrer" style={{ color: '#667eea', fontWeight: 'bold', fontSize: '12px' }}>📎 View</a>
+                          : <span style={{ color: '#aaa', fontSize: '12px' }}>—</span>}
+                      </td>
                       <td style={{ padding: '12px 15px' }}>{new Date(req.requested_at).toLocaleString()}</td>
                       <td style={{ padding: '12px 15px', textAlign: 'center' }}>
                         <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>

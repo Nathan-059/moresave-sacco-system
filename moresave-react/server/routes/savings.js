@@ -1,7 +1,30 @@
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const notifyMember = require('../utils/emailService');
+
+// Multer config for receipt uploads
+const receiptDir = process.env.VERCEL ? '/tmp/receipts/' : 'uploads/receipts/';
+const receiptStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    if (!fs.existsSync(receiptDir)) fs.mkdirSync(receiptDir, { recursive: true });
+    cb(null, receiptDir);
+  },
+  filename: (req, file, cb) => {
+    cb(null, 'receipt-' + Date.now() + path.extname(file.originalname));
+  }
+});
+const uploadReceipt = multer({ storage: receiptStorage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB max
+
+// Add receipt_url column if it doesn't exist (auto-migration)
+(async () => {
+  try {
+    await db.execute(`ALTER TABLE transaction_requests ADD COLUMN receipt_url VARCHAR(255) NULL`);
+  } catch (e) { /* already exists */ }
+})();
 
 // Get account info
 router.get('/:memberNumber', async (req, res) => {
@@ -98,9 +121,10 @@ router.get('/:accountNumber/history', async (req, res) => {
   }
 });
 
-// Submit a transaction request (Member)
-router.post('/request', async (req, res) => {
+// Submit a transaction request (Member) - Cash goes to pending, not instant
+router.post('/request', uploadReceipt.single('receipt'), async (req, res) => {
   const { memberNumber, type, amount, paymentMethod, phoneNumber, provider, description } = req.body;
+  const receiptUrl = req.file ? `/uploads/receipts/${req.file.filename}` : null;
   try {
     const [accounts] = await db.execute(`
       SELECT a.account_id 
@@ -113,14 +137,13 @@ router.post('/request', async (req, res) => {
     const accountId = accounts[0].account_id;
 
     await db.execute(`
-      INSERT INTO transaction_requests (account_id, request_type, amount, payment_method, phone_number, sim_provider, description)
-      VALUES (?, ?, ?, ?, ?, ?, ?)
-    `, [accountId, type, amount, paymentMethod, phoneNumber, provider, description]);
+      INSERT INTO transaction_requests (account_id, request_type, amount, payment_method, phone_number, sim_provider, description, receipt_url)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `, [accountId, type, amount, paymentMethod || 'cash', phoneNumber || null, provider || null, description, receiptUrl]);
 
-    // Log the member's request to audit log
-    await db.logAudit(null, memberNumber, 'SAVINGS_REQUEST_SUBMIT', 'transaction_requests', accountId, `Member ${memberNumber} submitted ${type} request of UGX ${Number(amount).toLocaleString()} via ${paymentMethod}`);
+    await db.logAudit(null, memberNumber, 'SAVINGS_REQUEST_SUBMIT', 'transaction_requests', accountId, `Member ${memberNumber} submitted ${type} request of UGX ${Number(amount).toLocaleString()} via ${paymentMethod || 'cash'}`);
 
-    res.json({ success: true, message: 'Request submitted successfully and is pending approval.' });
+    res.json({ success: true, message: 'Request submitted and is pending admin approval.' });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -130,7 +153,8 @@ router.post('/request', async (req, res) => {
 router.get('/requests/pending', async (req, res) => {
   try {
     const [rows] = await db.execute(`
-      SELECT r.request_id, r.request_type, r.amount, r.payment_method, r.phone_number, r.sim_provider, r.description, r.requested_at,
+      SELECT r.request_id, r.request_type, r.amount, r.payment_method, r.phone_number, r.sim_provider, 
+             r.description, r.requested_at, r.receipt_url,
              m.full_name, m.member_number, a.account_number
       FROM transaction_requests r
       JOIN accounts a ON r.account_id = a.account_id
