@@ -123,8 +123,17 @@ router.get('/:accountNumber/history', async (req, res) => {
 
 // Submit a transaction request (Member) - Cash goes to pending, not instant
 router.post('/request', uploadReceipt.single('receipt'), async (req, res) => {
-  const { memberNumber, type, amount, paymentMethod, phoneNumber, provider, description } = req.body;
-  const receiptUrl = req.file ? `/uploads/receipts/${req.file.filename}` : null;
+  const memberNumber = req.body.memberNumber || null;
+  const type         = req.body.type || 'deposit';
+  const amount       = req.body.amount || 0;
+  const paymentMethod = req.body.paymentMethod || 'cash';
+  const phoneNumber  = req.body.phoneNumber && req.body.phoneNumber !== '' ? req.body.phoneNumber : null;
+  const provider     = req.body.provider && req.body.provider !== '' ? req.body.provider : null;
+  const description  = req.body.description || null;
+  const receiptUrl   = req.file ? `/uploads/receipts/${req.file.filename}` : null;
+
+  if (!memberNumber) return res.status(400).json({ success: false, message: 'Member number is required' });
+
   try {
     const [accounts] = await db.execute(`
       SELECT a.account_id 
@@ -139,12 +148,13 @@ router.post('/request', uploadReceipt.single('receipt'), async (req, res) => {
     await db.execute(`
       INSERT INTO transaction_requests (account_id, request_type, amount, payment_method, phone_number, sim_provider, description, receipt_url)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [accountId, type, amount, paymentMethod || 'cash', phoneNumber || null, provider || null, description, receiptUrl]);
+    `, [accountId, type, parseFloat(amount), paymentMethod, phoneNumber, provider, description, receiptUrl]);
 
-    await db.logAudit(null, memberNumber, 'SAVINGS_REQUEST_SUBMIT', 'transaction_requests', accountId, `Member ${memberNumber} submitted ${type} request of UGX ${Number(amount).toLocaleString()} via ${paymentMethod || 'cash'}`);
+    await db.logAudit(null, memberNumber, 'SAVINGS_REQUEST_SUBMIT', 'transaction_requests', accountId, `Member ${memberNumber} submitted ${type} request of UGX ${Number(amount).toLocaleString()} via ${paymentMethod}`);
 
     res.json({ success: true, message: 'Request submitted and is pending admin approval.' });
   } catch (error) {
+    console.error('Request submit error:', error.message);
     res.status(500).json({ success: false, message: error.message });
   }
 });
