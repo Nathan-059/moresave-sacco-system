@@ -6,6 +6,7 @@ import { Settings as SettingsIcon, Bell, Shield, Database, Globe, Save, Download
 
 const Settings = () => {
   const user = JSON.parse(localStorage.getItem('user'));
+  const apiBase = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://moresave-sacco-system-production.up.railway.app');
   const [config, setConfig] = useState({
     general: { currency: 'UGX', timezone: 'Africa/Kampala', dateFormat: 'YYYY-MM-DD' },
     security: { complexPasswords: true, sessionTimeout: 30, twoFactorAuth: false },
@@ -167,7 +168,7 @@ const Settings = () => {
                     <p style={{ fontSize: '14px', marginBottom: '15px', color: 'var(--text-light)' }}>
                       Download a complete secure snapshot of the SACCO database. Store this file securely.
                     </p>
-                    <a href="/api/settings/backup" target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                    <a href={`${apiBase}/api/settings/backup`} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                       <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', backgroundColor: 'var(--dark-brown)' }}>
                         <Download size={16} /> Generate & Download Full Backup
                       </button>

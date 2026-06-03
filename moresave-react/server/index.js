@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 const db = require('./db');
+const functions = require('firebase-functions');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -78,6 +79,12 @@ app.use('/api/settings', require('./routes/settings'));
 app.use('/api/support', require('./routes/support'));
 app.use('/api/debug', require('./routes/debug'));
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Export the Express app as a Cloud Function
+exports.api = functions.https.onRequest(app);
+
+// Start the server locally if run directly
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
