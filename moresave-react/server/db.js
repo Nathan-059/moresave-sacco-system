@@ -26,6 +26,40 @@ const pool = mysql.createPool({
   ...sslConfig
 });
 
+// Debug wrapper for pool.execute
+const originalExecute = pool.execute;
+pool.execute = function(sql, params) {
+  if (params && params.some(p => p === undefined)) {
+    console.error('--- DATABASE EXECUTE RECEIVED UNDEFINED PARAMETER ---');
+    console.error('SQL:', sql);
+    console.error('Params:', params);
+    params.forEach((p, idx) => {
+      if (p === undefined) console.error(`Param at index ${idx} is undefined`);
+    });
+  }
+  return originalExecute.apply(this, arguments);
+};
+
+// Debug wrapper for conn.execute
+const originalGetConnection = pool.getConnection;
+pool.getConnection = async function() {
+  const conn = await originalGetConnection.apply(this, arguments);
+  const originalConnExecute = conn.execute;
+  conn.execute = function(sql, params) {
+    if (params && params.some(p => p === undefined)) {
+      console.error('--- CONNECTION EXECUTE RECEIVED UNDEFINED PARAMETER ---');
+      console.error('SQL:', sql);
+      console.error('Params:', params);
+      params.forEach((p, idx) => {
+        if (p === undefined) console.error(`Param at index ${idx} is undefined`);
+      });
+    }
+    return originalConnExecute.apply(this, arguments);
+  };
+  return conn;
+};
+
+
 pool.logAudit = async function(userId, username, action, tableName, recordId, description, ipAddress = '127.0.0.1') {
   try {
     await pool.execute(`

@@ -132,6 +132,16 @@ router.post('/request', uploadReceipt.single('receipt'), async (req, res) => {
   const description  = req.body.description || null;
   const receiptUrl   = req.file ? `/uploads/receipts/${req.file.filename}` : null;
 
+  console.log('--- Submitting Transaction Request ---');
+  console.log('memberNumber:', memberNumber);
+  console.log('type:', type);
+  console.log('amount:', amount);
+  console.log('paymentMethod:', paymentMethod);
+  console.log('phoneNumber:', phoneNumber);
+  console.log('provider:', provider);
+  console.log('description:', description);
+  console.log('receiptUrl:', receiptUrl);
+
   if (!memberNumber) return res.status(400).json({ success: false, message: 'Member number is required' });
 
   try {
@@ -142,19 +152,25 @@ router.post('/request', uploadReceipt.single('receipt'), async (req, res) => {
       WHERE m.member_number = ?
     `, [memberNumber]);
 
+    console.log('accounts result:', accounts);
+
     if (accounts.length === 0) return res.status(404).json({ success: false, message: 'Account not found' });
     const accountId = accounts[0].account_id;
+    console.log('accountId:', accountId);
+
+    const params = [accountId, type, parseFloat(amount), paymentMethod, phoneNumber, provider, description, receiptUrl];
+    console.log('Insert params:', params);
 
     await db.execute(`
       INSERT INTO transaction_requests (account_id, request_type, amount, payment_method, phone_number, sim_provider, description, receipt_url)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `, [accountId, type, parseFloat(amount), paymentMethod, phoneNumber, provider, description, receiptUrl]);
+    `, params);
 
     await db.logAudit(null, memberNumber, 'SAVINGS_REQUEST_SUBMIT', 'transaction_requests', accountId, `Member ${memberNumber} submitted ${type} request of UGX ${Number(amount).toLocaleString()} via ${paymentMethod}`);
 
     res.json({ success: true, message: 'Request submitted and is pending admin approval.' });
   } catch (error) {
-    console.error('Request submit error:', error.message);
+    console.error('Request submit error:', error);
     res.status(500).json({ success: false, message: error.message });
   }
 });
