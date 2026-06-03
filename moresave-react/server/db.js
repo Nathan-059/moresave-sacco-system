@@ -23,6 +23,7 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
+  multipleStatements: true,
   ...sslConfig
 });
 
@@ -73,6 +74,85 @@ pool.logAudit = async function(userId, username, action, tableName, recordId, de
 
 // Automatic database schema migration on startup
 (async () => {
+  const fs = require('fs');
+  const path = require('path');
+
+  // 1. Check if the 'users' table exists. If it doesn't, initialize the entire schema from SACCO_railway.sql
+  try {
+    const [tables] = await pool.execute(
+      "SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND table_name = 'users'",
+      [dbName]
+    );
+
+    if (tables.length === 0) {
+      console.log('--- DATABASE IS EMPTY: Initializing base schema from SACCO_railway.sql ---');
+      const sqlPath = path.join(__dirname, '../../database/SACCO_railway.sql');
+      if (fs.existsSync(sqlPath)) {
+        const sqlText = fs.readFileSync(sqlPath, 'utf8');
+        
+        // Split text into individual clean SQL statements
+        const cleanSql = sqlText.replace(/--.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+        const commands = [];
+        let currentCommand = '';
+        let inProcedure = false;
+        
+        const lines = cleanSql.split('\n');
+        for (let line of lines) {
+          const rawLine = line;
+          line = line.trim();
+          if (!line) continue;
+          if (line.toLowerCase().startsWith('delimiter')) continue;
+          
+          currentCommand += rawLine + '\n';
+          
+          if (line.toLowerCase().includes('create procedure') || line.toLowerCase().includes('create function')) {
+            inProcedure = true;
+          }
+          
+          if (inProcedure) {
+            const trimmedLine = line.toLowerCase();
+            if (trimmedLine.startsWith('end$$') || trimmedLine.startsWith('end$') || trimmedLine.startsWith('end;')) {
+              inProcedure = false;
+              let cleanCommand = currentCommand.trim();
+              cleanCommand = cleanCommand.replace(/end\$\$/i, 'end')
+                                         .replace(/end\$/i, 'end')
+                                         .replace(/end;/i, 'end');
+              commands.push(cleanCommand);
+              currentCommand = '';
+            }
+          } else {
+            if (line.endsWith(';')) {
+              commands.push(currentCommand.trim());
+              currentCommand = '';
+            }
+          }
+        }
+        if (currentCommand.trim()) {
+          commands.push(currentCommand.trim());
+        }
+
+        console.log(`Executing ${commands.length} setup queries...`);
+        for (let i = 0; i < commands.length; i++) {
+          const cmd = commands[i];
+          try {
+            await pool.query(cmd);
+          } catch (cmdErr) {
+            console.error(`Error executing database setup query index ${i}:`, cmdErr.message);
+            console.error('Failed query:', cmd.substring(0, 200) + '...');
+          }
+        }
+        console.log('--- Database schema initialization and seeding complete ---');
+      } else {
+        console.warn('SACCO_railway.sql not found at path:', sqlPath);
+      }
+    } else {
+      console.log('Base database tables are already present.');
+    }
+  } catch (initErr) {
+    console.error('Database connection / initialization check failed:', initErr.message);
+  }
+
+  // 2. Perform incremental migrations
   const queries = [
     "ALTER TABLE members ADD COLUMN next_of_kin_name VARCHAR(255)",
     "ALTER TABLE members ADD COLUMN next_of_kin_relationship VARCHAR(100)",

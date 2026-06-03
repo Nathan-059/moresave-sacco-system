@@ -76,6 +76,7 @@ app.use('/api/pesapal', require('./routes/pesapal'));
 app.use('/api/audit', require('./routes/audit'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/support', require('./routes/support'));
+app.use('/api/debug', require('./routes/debug'));
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
