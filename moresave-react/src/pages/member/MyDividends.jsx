@@ -12,10 +12,11 @@ const MyDividends = () => {
     const fetchDividends = async () => {
       try {
         const res = await fetch(`/api/portal/dividends/${user.username}`);
-        if (res.ok) setDividends(await res.json());
-        else setDividends([]); // Placeholder
+        const data = await res.json();
+        setDividends(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching dividends');
+        setDividends([]);
       } finally {
         setLoading(false);
       }

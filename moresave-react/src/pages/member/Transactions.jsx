@@ -143,6 +143,7 @@ const Transactions = () => {
   const fetchData = async () => {
     try {
       const profileRes = await fetch(`/api/portal/profile/${user.username}`);
+      if (!profileRes.ok) throw new Error('Failed to load profile');
       const prof = await profileRes.json();
       setProfile(prof);
       setPhoneNumber(prof.phone_number || '');
@@ -151,10 +152,14 @@ const Transactions = () => {
         fetch(`/api/savings/${prof.account_number}/history`),
         fetch(`/api/savings/requests/member/${user.username}`)
       ]);
-      setTransactions(await txRes.json());
-      setRequests(await reqRes.json());
+      const txData = await txRes.json();
+      const reqData = await reqRes.json();
+      setTransactions(Array.isArray(txData) ? txData : []);
+      setRequests(Array.isArray(reqData) ? reqData : []);
     } catch (err) {
       console.error('Error fetching data:', err);
+      setTransactions([]);
+      setRequests([]);
     } finally {
       setLoading(false);
     }

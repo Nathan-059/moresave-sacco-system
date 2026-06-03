@@ -58,6 +58,23 @@ router.get('/next-of-kin/:username', async (req, res) => {
   }
 });
 
+// Get member dividends
+router.get('/dividends/:username', async (req, res) => {
+  try {
+    const [rows] = await db.execute(`
+      SELECT d.year, d.amount, d.payment_date as date, d.description
+      FROM dividends d
+      JOIN members m ON d.member_id = m.member_id
+      JOIN users u ON m.user_id = u.user_id
+      WHERE u.username = ?
+      ORDER BY d.year DESC
+    `, [req.params.username]);
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // Get recent transactions for member dashboard
 router.get('/recent-transactions/:username', async (req, res) => {
   try {
