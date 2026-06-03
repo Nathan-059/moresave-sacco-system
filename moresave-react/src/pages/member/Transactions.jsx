@@ -11,10 +11,13 @@ const MobileMoneyModal = ({ isOpen, onClose, memberNumber, amount, phoneNumber, 
   const [trackingId, setTrackingId] = useState('');
   const [verifying, setVerifying] = useState(false);
 
+  // Reset and trigger API call whenever modal opens
   useEffect(() => {
-    if (!isOpen) { setStep('loading'); setPaymentUrl(''); setTrackingId(''); return; }
+    if (!isOpen) return;
+    setStep('loading');
+    setPaymentUrl('');
+    setTrackingId('');
 
-    // Listen for postMessage from PesaPal iframe callback
     const handleMsg = (e) => {
       if (e.data?.type === 'PESAPAL_PAYMENT_RESULT') {
         const { success, status, trackingId: tid } = e.data.data;
@@ -29,14 +32,13 @@ const MobileMoneyModal = ({ isOpen, onClose, memberNumber, amount, phoneNumber, 
     window.addEventListener('message', handleMsg);
 
     // Immediately call PesaPal API
-    (async () => {
-      try {
-        const res = await fetch('/api/pesapal/submit-payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ memberNumber, amount, paymentMethod: 'mobile_money', phoneNumber, provider, description, usePopup: true })
-        });
-        const data = await res.json();
+    fetch('/api/pesapal/submit-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberNumber, amount, paymentMethod: 'mobile_money', phoneNumber, provider, description, usePopup: true })
+    })
+      .then(r => r.json())
+      .then(data => {
         if (data.success && data.redirect_url) {
           setPaymentUrl(data.redirect_url);
           setTrackingId(data.order_tracking_id);
@@ -45,14 +47,14 @@ const MobileMoneyModal = ({ isOpen, onClose, memberNumber, amount, phoneNumber, 
           onError({ message: data.message || 'Failed to initiate payment' });
           onClose();
         }
-      } catch {
+      })
+      .catch(() => {
         onError({ message: 'Network error. Check your connection and try again.' });
         onClose();
-      }
-    })();
+      });
 
     return () => window.removeEventListener('message', handleMsg);
-  }, [isOpen]);
+  }, [isOpen]); // only re-run when isOpen changes
 
   const verifyNow = async () => {
     setVerifying(true);
@@ -186,6 +188,9 @@ const Transactions = () => {
       if (paymentMethod === 'mobile_money') {
         formData.append('phoneNumber', phoneNumber);
         formData.append('provider', provider);
+      } else {
+        formData.append('phoneNumber', '');
+        formData.append('provider', '');
       }
       if (receipt) formData.append('receipt', receipt);
 
