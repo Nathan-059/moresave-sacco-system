@@ -18,11 +18,17 @@ Thumbs.db
 node_modules/
 moresave-react/node_modules/
 moresave-react/server/node_modules/
+
+# Build output
 moresave-react/dist/
+moresave-react/.firebase/
 
 # Environment secrets — never commit these
 moresave-react/server/.env
 .env
 
-# Uploaded files (too large for git)
+# Uploaded files (managed at runtime, not tracked in git)
 moresave-react/server/uploads/
+
+# Deployment configs (not needed for local dev)
+# vercel.json, railway.json, Procfile — deleted

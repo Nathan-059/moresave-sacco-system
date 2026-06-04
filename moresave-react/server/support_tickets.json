@@ -76,5 +76,39 @@
         "read": true
       }
     ]
+  },
+  {
+    "memberNumber": "MRS1001",
+    "memberName": "NANKYA PROSSY",
+    "messages": [
+      {
+        "id": 1780570152701,
+        "sender": "member",
+        "text": "hello",
+        "timestamp": "2026-06-04T10:49:12.701Z",
+        "read": false
+      },
+      {
+        "id": 1780570152703,
+        "sender": "ai",
+        "text": "Hello! 👋 Welcome to Moresave SACCO Customer Support!\n\nI'm your virtual assistant. I'm here to help you with questions about:\n• 💰 Savings & Deposits\n• 🏦 Loans & Repayments\n• 📈 Dividends\n• 🔐 Account Access\n• 📞 Contact & Office Information\n\nPlease type your question and I'll do my best to help you right away!",
+        "timestamp": "2026-06-04T10:49:12.702Z",
+        "read": false
+      },
+      {
+        "id": 1780570177110,
+        "sender": "member",
+        "text": "how can i apply for a loan",
+        "timestamp": "2026-06-04T10:49:37.110Z",
+        "read": false
+      },
+      {
+        "id": 1780570177111,
+        "sender": "ai",
+        "text": "Thank you for your inquiry! 🏦\n\nAt Moresave SACCO, you can apply for a loan if you meet the following criteria:\n• You must be an active member for at least 3 months\n• Your loan can be up to 3x your current savings balance\n• Repayment periods range from 6 to 36 months\n• Monthly interest rate is 2%\n\nTo apply, go to **Apply for Loan** in your dashboard. A loan officer will review your application within 2-3 working days. Is there anything else I can help you with?",
+        "timestamp": "2026-06-04T10:49:37.110Z",
+        "read": false
+      }
+    ]
   }
 ]

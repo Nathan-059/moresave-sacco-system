@@ -1,7 +1,57 @@
-run now
-# Moresave SACCO - How to Run in IntelliJ IDEA
+# Moresave SACCO - How to Run
 
-## Prerequisites
+This project has **two separate applications**:
+1. **Web Application** (React + Node.js backend)
+2. **Desktop Application** (Java/JavaFX)
+
+---
+
+## 🌐 WEB APPLICATION (React + Node.js)
+
+### Prerequisites
+- **Node.js 20+** ([Download](https://nodejs.org/))
+- **npm** (comes with Node.js)
+
+### ⚡ Quick Start (Windows)
+Double-click `START_WEB_APP.bat` in the project root and open http://localhost:5173
+
+### Manual Start (2 Terminal Windows)
+
+**Terminal 1 - Backend Server (MUST START FIRST):**
+```bash
+cd moresave-react\server
+npm install
+npm start
+```
+✅ Wait for: `Server running on port 5000`
+
+**Terminal 2 - Frontend:**
+```bash
+cd moresave-react
+npm install
+npm run dev
+```
+✅ Open: http://localhost:5173
+
+### Login Credentials
+- **Username:** admin
+- **Password:** admin123
+
+### Troubleshooting
+
+| Error | Solution |
+|-------|----------|
+| "Connection error" on login | **Backend server isn't running!** Check Terminal 1 |
+| Port 5000 already in use | `netstat -ano \| findstr :5000` → `taskkill /PID <PID> /F` |
+| npm command not found | Install Node.js 20: https://nodejs.org/ |
+| ENOENT: no such file | Run `npm install` in both folders |
+| Database error | MySQL running? Check localhost:3306 has `SACCO` database |
+
+---
+
+## 🖥️ DESKTOP APPLICATION (Java/JavaFX)
+
+### Prerequisites
 - IntelliJ IDEA (Community or Ultimate)
 - Java JDK 20 (already installed)
 - MySQL Server running on localhost:3306
