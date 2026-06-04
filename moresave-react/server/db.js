@@ -1,17 +1,30 @@
+// ============================================================
+// MORESAVE SACCO - Database Connection Module (db.js)
+// This file creates and exports a MySQL connection pool.
+// All backend routes import this file to query the database.
+// ============================================================
+
+// mysql2/promise gives us async/await support for database queries
 const mysql = require('mysql2/promise');
+
+// Load environment variables from .env file
 require('dotenv').config();
 
-// Railway auto-injects MYSQL* variables when MySQL service is in the same project
-// Fall back to DB_* variables (manual / Aiven), then localhost for local dev
+// ── Database Connection Settings ─────────────────────────────
+// These values are read from environment variables so the same
+// code works both locally and on cloud platforms like Railway.
+// Priority: DB_* (local .env) → MYSQL* (Railway auto-inject) → defaults
+
 const dbHost     = process.env.DB_HOST     || process.env.MYSQLHOST     || process.env.RAILWAY_TCP_PROXY_DOMAIN || 'localhost';
 const dbPort     = process.env.DB_PORT     || process.env.MYSQLPORT     || process.env.RAILWAY_TCP_PROXY_PORT   || '3306';
 const dbUser     = process.env.DB_USER     || process.env.MYSQLUSER     || 'root';
 const dbPassword = process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '';
 const dbName     = process.env.DB_NAME     || process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || 'sacco';
 
-// Use SSL only when explicitly requested (Aiven) — not needed on Railway internal network
+// SSL is required for cloud-hosted databases (Aiven) but not for local MySQL
 const sslConfig = process.env.DB_SSL === 'true' ? { ssl: { rejectUnauthorized: false } } : {};
 
+// Log which database we are connecting to (useful for debugging)
 console.log(`DB connecting to: ${dbHost}:${dbPort} / ${dbName} as ${dbUser}`);
 
 const pool = mysql.createPool({
