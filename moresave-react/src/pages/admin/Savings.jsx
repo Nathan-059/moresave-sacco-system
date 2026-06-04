@@ -1,9 +1,104 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../../components/Sidebar';
 import Navbar from '../../components/Navbar';
-import PesaPalPopup from '../../components/PesaPalPopup';
 import { useNotify } from '../../context/NotifyContext';
-import { Search, Plus, Minus, History, Check, X, Clock } from 'lucide-react';
+import { Search, Plus, Minus, History, Check, X, Clock, Shield } from 'lucide-react';
+
+// ── Inline Mobile Money Modal (same as member Transactions page) ──
+// Opens straight to PesaPal iframe — no double popup
+const MobileMoneyModal = ({ isOpen, onClose, memberNumber, amount, phoneNumber, provider, description, onSuccess, onError }) => {
+  const [step, setStep] = useState('loading');
+  const [paymentUrl, setPaymentUrl] = useState('');
+  const [trackingId, setTrackingId] = useState('');
+  const [verifying, setVerifying] = useState(false);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    setStep('loading');
+    setPaymentUrl('');
+    setTrackingId('');
+
+    const handleMsg = (e) => {
+      if (e.data?.type === 'PESAPAL_PAYMENT_RESULT') {
+        const { success, status, trackingId: tid } = e.data.data;
+        if (success && status === 'COMPLETED') onSuccess({ trackingId: tid });
+        else onError({ message: `Payment ${status || 'failed'}. Check phone or try again.` });
+        onClose();
+      }
+    };
+    window.addEventListener('message', handleMsg);
+
+    fetch('/api/pesapal/submit-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memberNumber, amount, paymentMethod: 'mobile_money', phoneNumber, provider, description, usePopup: true })
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.success && data.redirect_url) {
+          setPaymentUrl(data.redirect_url);
+          setTrackingId(data.order_tracking_id);
+          setStep('iframe');
+        } else {
+          onError({ message: data.message || 'Failed to initiate payment' });
+          onClose();
+        }
+      })
+      .catch(() => { onError({ message: 'Network error. Try again.' }); onClose(); });
+
+    return () => window.removeEventListener('message', handleMsg);
+  }, [isOpen]);
+
+  const verifyNow = async () => {
+    setVerifying(true);
+    try {
+      const res = await fetch(`/api/pesapal/verify-status/${trackingId}`);
+      const data = await res.json();
+      if (data.success && data.status === 'COMPLETED') { onSuccess({ trackingId }); onClose(); }
+      else onError({ message: `Status: ${data.status || 'Pending'}. Wait and try again.` });
+    } catch { onError({ message: 'Error verifying. Contact support.' }); }
+    finally { setVerifying(false); }
+  };
+
+  if (!isOpen) return null;
+  return (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}>
+      <div style={{ background: 'white', borderRadius: '12px', width: '100%', maxWidth: '700px', maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: '14px 20px', borderBottom: '1px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8f9fa', borderRadius: '12px 12px 0 0' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <Shield size={18} color="#667eea" />
+            <span style={{ fontWeight: 'bold', fontSize: '15px' }}>Mobile Money Payment — {provider} Uganda</span>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={20} color="#666" /></button>
+        </div>
+        <div style={{ padding: '16px', flex: 1, overflowY: 'auto' }}>
+          {step === 'loading' && (
+            <div style={{ textAlign: 'center', padding: '40px' }}>
+              <div style={{ width: '40px', height: '40px', border: '4px solid #eee', borderTop: '4px solid #667eea', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+              <p style={{ color: '#666' }}>Connecting to PesaPal...</p>
+            </div>
+          )}
+          {step === 'iframe' && (
+            <>
+              <div style={{ background: '#fff8e1', padding: '10px 14px', borderRadius: '6px', marginBottom: '12px', fontSize: '13px', color: '#856404' }}>
+                📱 <strong>Check phone ({phoneNumber})!</strong> A {provider} mobile money prompt has been sent. Enter your PIN on your phone.
+              </div>
+              <div style={{ border: '2px solid #e1e5e9', borderRadius: '8px', overflow: 'hidden', height: '420px' }}>
+                <iframe src={paymentUrl} style={{ width: '100%', height: '100%', border: 'none' }} title="PesaPal Payment" />
+              </div>
+              <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                <button onClick={verifyNow} disabled={verifying} style={{ padding: '9px 24px', background: verifying ? '#aaa' : '#27ae60', color: 'white', border: 'none', borderRadius: '6px', cursor: verifying ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
+                  {verifying ? 'Checking...' : "✅ I've paid — Verify Now"}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
+  );
+};
 
 const Savings = () => {
   const [memberNo, setMemberNo] = useState('');
@@ -170,8 +265,8 @@ const Savings = () => {
 
   return (
     <div style={{ display: 'flex' }}>
-      {/* PesaPal Popup */}
-      <PesaPalPopup
+      {/* Mobile Money Modal — inline, no external component needed */}
+      <MobileMoneyModal
         isOpen={showPesaPalPopup}
         onClose={() => setShowPesaPalPopup(false)}
         memberNumber={memberNo}
